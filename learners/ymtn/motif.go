@@ -24,6 +24,8 @@ func (self Motif) Diff() int {
 
 var nWindows = 10
 
+//Detect motifs in a time series x given its change scores
+// min and max define the minimum and maximum motifs lengths to expect
 func DetectMotifs(x, changeScores []float64, min, max int) [][]Motif {
 	locs := make([][]Motif, 0)
 
@@ -31,11 +33,11 @@ func DetectMotifs(x, changeScores []float64, min, max int) [][]Motif {
 	var extraLength = 0.2
 
 	var candidateLocs = make([]int, nWindows)
-	glog.V(1).Infoln("Raw CS:", changeScores)
+	glog.V(2).Infoln("Raw CS:", changeScores)
 	normalize(changeScores)
-	glog.V(1).Infoln("NormCS:", changeScores)
+	glog.V(2).Infoln("NormCS:", changeScores)
 	cumsum := calcCumSum(changeScores)
-	glog.V(1).Infoln("CumSum:", cumsum)
+	glog.V(2).Infoln("CumSum:", cumsum)
 	for i := 0; i < nWindows; i++ {
 		p := rand.Float64()
 		for j := 0; j < T; j++ {
@@ -216,8 +218,8 @@ func generateNoiseWindow(w int, x []float64) []float64 {
 }
 
 func createSWSet(candidateLocs []int, nWindows, nSub, w, T, nSkip int) *matrix.FloatMatrix {
-	loc := matrix.FloatZeros(nWindows, nSub)
 	glog.V(3).Infoln("createSWSet", nWindows, nSub)
+	loc := matrix.FloatZeros(nWindows, nSub)
 	for i := 0; i < nWindows; i++ {
 		be := int(
 			math.Min(
@@ -233,15 +235,19 @@ func createSWSet(candidateLocs []int, nWindows, nSub, w, T, nSkip int) *matrix.F
 }
 
 func dE(s1, s2 []float64) float64 {
-	if len(s1) != len(s2) {
-		panic("Cannot compute distance between different length series")
-	}
 	sum := 0.0
-	for i := range s1 {
-		diff := s1[i] - s2[i]
-		sum += diff * diff
+	l := int(math.Min(float64(len(s1)), float64(len(s2))))
+	for i := 0; i < l; i++ {
+		//if i >= len(s2) {
+		//	sum += s1[i] * s1[i]
+		//} else if i >= len(s1) {
+		//	sum += s2[i] * s2[i]
+		//} else {
+			diff := s1[i] - s2[i]
+			sum += diff * diff
+		//}
 	}
-	return sum / float64(len(s1))
+	return sum / float64(l)
 }
 
 func compareFindBests(
@@ -267,8 +273,22 @@ func compareFindBests(
 			for l := 0; l < nSub; l++ {
 				compStart := int(allSW.GetAt(j, l))
 				candStart := int(candSW.GetAt(0, k))
-				s1 := comp[compStart : compStart+wbar-1]
-				s2 := cand[candStart : candStart+wbar-1]
+				if compStart < 0 {
+					compStart = 0
+				}
+				if candStart < 0 {
+					candStart = 0
+				}
+				compEnd := compStart + wbar - 1
+				if compEnd >= len(comp) {
+					compEnd = len(comp) - 1
+				}
+				candEnd := candStart + wbar - 1
+				if candEnd >= len(cand) {
+					candEnd = len(cand) - 1
+				}
+				s1 := comp[compStart:compEnd]
+				s2 := cand[candStart:candEnd]
 
 				distance := dFun(s1, s2)
 				dists.SetAt(j, l, distance)

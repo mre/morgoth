@@ -13,6 +13,7 @@ const (
 	small = 1e-9
 )
 
+//Calcuate change scores for a time series x
 func RSST(x []float64, w, n int) []float64 {
 
 	glog.V(2).Infoln("x: ", x)
@@ -37,7 +38,7 @@ func RSST(x []float64, w, n int) []float64 {
 			changeScores[t] = calcChangeScore(past, future)
 		} // else changescores[t] = 0
 	}
-	glog.V(1).Infoln("Change Scores: ", changeScores)
+	glog.V(2).Infoln("Change Scores: ", changeScores)
 
 	//Weight each score by it's past and future
 	width := int(float64(w)/2.0 + 0.5)
@@ -65,7 +66,7 @@ func RSST(x []float64, w, n int) []float64 {
 			max = score
 		}
 	}
-	glog.V(1).Infoln("Weighted: ", weighted)
+	glog.V(2).Infoln("Weighted: ", weighted)
 
 	if max == 0 {
 		//Trivial zero case, we can return early
@@ -81,7 +82,7 @@ func RSST(x []float64, w, n int) []float64 {
 			trimmed[i] = v / max
 		}
 	}
-	glog.V(1).Infoln("Trimmed: ", trimmed)
+	glog.V(2).Infoln("Trimmed: ", trimmed)
 
 	return trimmed
 }

@@ -12,7 +12,7 @@ func init() {
 	flag.Parse()
 	if testing.Verbose() {
 		flag.Set("logtostderr", "true")
-		flag.Set("vmodule", "motif=2,motif_test=3")
+		//flag.Set("vmodule", "motif=2,motif_test=3")
 	}
 }
 
